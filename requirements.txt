@@ -3,3 +3,4 @@ Plotly==5.17.0
 matplotlib==3.8.1
 networkx==3.1
 squarify==0.4.3
+gunicorn==21.2.0
