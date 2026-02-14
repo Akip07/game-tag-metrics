@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Tag Metrics Dashboard</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 2.5em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e0e0e0;
+            flex-wrap: wrap;
+        }
+        
+        .nav-tabs button {
+            padding: 12px 20px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-tabs button:hover {
+            color: #667eea;
+        }
+        
+        .nav-tabs button.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .chart-container {
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .user-selector {
+            margin-bottom: 20px;
+        }
+        
+        .user-selector label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .user-selector select {
+            width: 100%;
+            max-width: 300px;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: border-color 0.3s ease;
+        }
+        
+        .user-selector select:hover {
+            border-color: #667eea;
+        }
+        
+        .user-selector select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .chart {
+            width: 100%;
+            min-height: 500px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #c33;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Game Tag Analytics</h1>
+        
+        <div class="nav-tabs">
+            <button class="tab-btn active" data-tab="user-tags">User Tags</button>
+            <button class="tab-btn" data-tab="tag-heatmap">Tag Heatmap</button>
+            <button class="tab-btn" data-tab="tag-counts">Tag Frequency</button>
+            <button class="tab-btn" data-tab="user-agreement">User Agreement</button>
+            <button class="tab-btn" data-tab="tag-network">Tag Network</button>
+            <button class="tab-btn" data-tab="kasane-image">Pearto</button>
+        </div>
+        
+        <!-- User Tags Tab -->
+        <div id="user-tags" class="tab-content active">
+            <div class="user-selector">
+                <label for="user-select">Select User:</label>
+                <select id="user-select">
+                    <option value="">Loading users...</option>
+                </select>
+            </div>
+            <div class="chart-container">
+                <div id="user-tags-chart" class="chart loading">Loading chart...</div>
+            </div>
+        </div>
+        
+        <!-- Tag Heatmap Tab -->
+        <div id="tag-heatmap" class="tab-content">
+            <div class="chart-container">
+                <div id="tag-heatmap-chart" class="chart loading">Loading chart...</div>
+            </div>
+        </div>
+        
+        <!-- Tag Frequency Tab -->
+        <div id="tag-counts" class="tab-content">
+            <div class="chart-container">
+                <div id="tag-counts-chart" class="chart loading">Loading chart...</div>
+            </div>
+        </div>
+        
+        <!-- User Agreement Tab -->
+        <div id="user-agreement" class="tab-content">
+            <div class="chart-container">
+                <div id="user-agreement-chart" class="chart loading">Loading chart...</div>
+            </div>
+        </div>
+        
+        <!-- Tag Network Tab -->
+        <div id="tag-network" class="tab-content">
+            <div class="chart-container">
+                <div id="tag-network-chart" class="chart loading">Loading chart...</div>
+            </div>
+        </div>
+        
+        <!-- Kasane Pearto Image Tab -->
+        <div id="kasane-image" class="tab-content">
+            <div style="text-align: center; overflow: auto;">
+                <img src="{{ url_for('static', filename='Kasane_Pearto_Original.webp') }}" 
+                     alt="Kasane Pearto" 
+                     style="width: 1000px; height: auto; border-radius: 8px;">
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Initialize users
+        const users = {{ users | tojson }};
+        
+        // Tab switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabName = btn.dataset.tab;
+                
+                // Update active button
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // Update active content
+                document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+                document.getElementById(tabName).classList.add('active');
+                
+                // Load chart if needed
+                loadChart(tabName);
+            });
+        });
+        
+        // Populate user selector
+        const userSelect = document.getElementById('user-select');
+        users.forEach(user => {
+            const option = document.createElement('option');
+            option.value = user;
+            option.textContent = user;
+            userSelect.appendChild(option);
+        });
+        userSelect.value = users[0] || '';
+        
+        // User selector change event
+        userSelect.addEventListener('change', () => {
+            loadedCharts.delete('user-tags');  // Clear cache for user-tags
+            loadChart('user-tags');
+        });
+        
+        // Load charts
+        const loadedCharts = new Set();
+        
+        function loadChart(tabName) {
+            if (loadedCharts.has(tabName)) return;
+            
+            let url;
+            let containerId;
+            
+            switch(tabName) {
+                case 'user-tags':
+                    const user = userSelect.value;
+                    if (!user) return;
+                    url = `/api/user-tags/${user}`;
+                    containerId = 'user-tags-chart';
+                    break;
+                case 'tag-heatmap':
+                    url = '/api/tag-heatmap';
+                    containerId = 'tag-heatmap-chart';
+                    break;
+                case 'tag-counts':
+                    url = '/api/tag-counts';
+                    containerId = 'tag-counts-chart';
+                    break;
+                case 'user-agreement':
+                    url = '/api/user-agreement';
+                    containerId = 'user-agreement-chart';
+                    break;
+                case 'tag-network':
+                    url = '/api/tag-network';
+                    containerId = 'tag-network-chart';
+                    break;
+                case 'kasane-image':
+                    // No need to load data for image tab
+                    loadedCharts.add(tabName);
+                    return;
+                default:
+                    return;
+            }
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        document.getElementById(containerId).innerHTML = `<div class="error">Error: ${data.error}</div>`;
+                    } else {
+                        Plotly.newPlot(containerId, data.data, data.layout, {responsive: true});
+                        loadedCharts.add(tabName);
+                    }
+                })
+                .catch(error => {
+                    document.getElementById(containerId).innerHTML = `<div class="error">Error loading chart: ${error.message}</div>`;
+                });
+        }
+        
+        // Load initial chart
+        loadChart('user-tags');
+    </script>
+</body>
+</html>

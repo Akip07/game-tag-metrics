@@ -21,6 +21,8 @@ EXCLUDED_TAGS = {
 	"local co-op",
 	"massively multiplayer",
 	"moddable",
+	"local multiplayer",
+	"4 player local",
 }
 
 
@@ -252,13 +254,15 @@ def build_tag_network(game_tags):
 	
 	for game, info in game_tags.items():
 		tags = info["tags"]
+		# Filter out excluded tags
+		filtered_tags = [tag for tag in tags if tag.strip().casefold() not in EXCLUDED_TAGS]
 		# Add nodes
-		for tag in tags:
+		for tag in filtered_tags:
 			if tag not in G:
 				G.add_node(tag)
 		# Add edges between all tag pairs in this game
-		for i, tag1 in enumerate(tags):
-			for tag2 in tags[i+1:]:
+		for i, tag1 in enumerate(filtered_tags):
+			for tag2 in filtered_tags[i+1:]:
 				if G.has_edge(tag1, tag2):
 					G[tag1][tag2]["weight"] += 1
 				else:
