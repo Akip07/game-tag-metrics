@@ -1,5 +1,13 @@
 {
-    "PEAK": [],
+    "PEAK": {
+        "Physics":1,
+        "Exploration":1,
+        "First-Person":1,
+        "Cartoony":1,
+        "3D":1,
+        "Indie":1,
+        "Funny":1
+    },
     "Abiotic Factor": {
         "Survival": 851,
         "Online Co-Op": 838,
@@ -948,9 +956,31 @@
         "Strategy": 3678,
         "Procedural Generation": 3659
     },
-    "Abyssus": [],
-    "Mage Arena": [],
-    "Jump Space": [],
+    "Abyssus": {
+        "Rogue-lite": 122,
+        "Dungeon Crawler": 109,
+        "Fantasy": 105,
+        "Indie": 104,
+        "Adventure": 103,
+        "Atmospheric": 97,
+        "Combat": 96
+
+    },
+    "Mage Arena": {
+        "Magic": 122,
+        "Action": 120,
+        "Dark Fantasy": 120,
+        "Combadt": 120,
+        "FPS": 120
+    },
+    "Jump Space": {
+        "Space": 122,
+        "Base-Building": 122,
+        "Action": 122,
+        "FPS": 122,
+        "Sci-fi": 122
+
+    },
     "Forever Skies": {
         "Singleplayer": 635,
         "Exploration": 549,
@@ -973,11 +1003,39 @@
         "Resource Management": 396,
         "Science": 389
     },
-    "mycopunk": [],
-    "Deep Dish Dungeon": [],
-    "YapYap": [],
-    "Roadside Research": [],
-    "battlefield 6": [],
+    "mycopunk": {
+        "Action": 122,
+        "Shooter": 122,
+        "FPS": 122,
+        "PvE": 122
+    },
+    "Deep Dish Dungeon": {
+        "Dungeon Crawler": 122,
+        "Survival": 122,
+        "Mistery": 122
+    },
+    "YapYap": {
+        "Comedy": 122,
+        "Magic": 122,
+        "Horror": 122,
+        "PvE": 122
+    },
+    "Roadside Research": {
+        "Funny": 122,
+        "Sci-fi": 122,
+        "Immersive Sim": 122,
+        "Simulation": 711,
+        "Management": 479,
+        "Sandbox": 180,
+        "Casual": 173
+    },
+    "battlefield 6": {
+        "Action": 122,
+        "FPS": 122,
+        "Shooter": 122,
+        "Military": 122,
+        "War": 122
+    },
     "Deadzone: Rogue": {
         "Early Access": 679,
         "Rogue-like": 617,
@@ -999,5 +1057,11 @@
         "Loot": 471,
         "Dark": 457,
         "3D": 448
+    },
+    "Far Far West": {
+        "Action": 122,
+        "Adventure": 122,
+        "Western": 122,
+        "PvE": 122
     }
 }

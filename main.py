@@ -5,6 +5,23 @@ import re
 import unicodedata
 
 import matplotlib.pyplot as plt
+import networkx as nx
+import squarify
+
+
+EXCLUDED_TAGS = {
+	"multiplayer",
+	"co-op",
+	"online co-op",
+	"singleplayer",
+	"character customization",
+	"early access",
+	"controller",
+	"great soundtrack",
+	"local co-op",
+	"massively multiplayer",
+	"moddable",
+}
 
 
 def normalize_key(text: str) -> str:
@@ -91,6 +108,8 @@ def compute_tag_averages(users, reviews, game_tags, min_count=3):
 
 		tags = tag_entry["tags"]
 		for tag in tags:
+			if tag.strip().casefold() in EXCLUDED_TAGS:
+				continue
 			stats = tag_stats.setdefault(tag, {"count": 0, "sums": {user: 0.0 for user in users}})
 			stats["count"] += 1
 			for user in users:
@@ -159,35 +178,28 @@ def plot_tag_heatmap(tag_stats, users, output_path, min_count=3):
 	plt.close()
 
 
-def plot_tag_counts_pie(tag_stats, output_path, min_percent=1.0):
+def plot_tag_counts_treemap(tag_stats, output_path, min_count=3):
 	if not tag_stats:
 		return
 
-	items = sorted(tag_stats.items(), key=lambda item: item[1]["count"], reverse=True)
-	total = sum(stats["count"] for _, stats in items)
-	if total == 0:
+	items = [item for item in tag_stats.items() if item[1]["count"] >= min_count]
+	items = sorted(items, key=lambda item: item[1]["count"], reverse=True)
+
+	if not items:
 		return
 
-	labels = []
-	counts = []
-	other_count = 0
-	threshold = total * (min_percent / 100.0)
-	for tag, stats in items:
-		count = stats["count"]
-		if count < threshold:
-			other_count += count
-		else:
-			labels.append(tag)
-			counts.append(count)
-	if other_count > 0:
-		labels.append("Other")
-		counts.append(other_count)
+	labels = [tag for tag, _ in items]
+	counts = [stats["count"] for _, stats in items]
 
-	plt.figure(figsize=(12, 12))
-	plt.pie(counts, labels=labels, autopct="%1.1f%%", startangle=90)
-	plt.title("Tag frequency across games")
+	plt.figure(figsize=(14, 10))
+	# Create softer, pastel-like colors by blending with white
+	base_colors = [plt.cm.hsv(i / len(labels)) for i in range(len(labels))]
+	colors = [(r * 0.6 + 1 * 0.4, g * 0.6 + 1 * 0.4, b * 0.6 + 1 * 0.4, a) for r, g, b, a in base_colors]
+	squarify.plot(sizes=counts, label=labels, ax=plt.gca(), color=colors, text_kwargs={"fontsize": 9})
+	plt.title("Tag frequency across games", fontsize=16, fontweight="bold")
+	plt.axis("off")
 	plt.tight_layout()
-	plt.savefig(output_path, dpi=150)
+	plt.savefig(output_path, dpi=150, bbox_inches="tight")
 	plt.close()
 
 
@@ -232,6 +244,64 @@ def compute_user_agreement(users, reviews):
 				correlation_matrix[i][j] = 0.0
 	
 	return correlation_matrix
+
+
+def build_tag_network(game_tags):
+	"""Build network of tags that appear together in games."""
+	G = nx.Graph()
+	
+	for game, info in game_tags.items():
+		tags = info["tags"]
+		# Add nodes
+		for tag in tags:
+			if tag not in G:
+				G.add_node(tag)
+		# Add edges between all tag pairs in this game
+		for i, tag1 in enumerate(tags):
+			for tag2 in tags[i+1:]:
+				if G.has_edge(tag1, tag2):
+					G[tag1][tag2]["weight"] += 1
+				else:
+					G.add_edge(tag1, tag2, weight=1)
+	
+	return G
+
+
+def plot_tag_network(game_tags, output_path):
+	"""Visualize tag co-occurrence network."""
+	G = build_tag_network(game_tags)
+	
+	if len(G.nodes()) == 0:
+		return
+	
+	plt.figure(figsize=(18, 14))
+	# Use spring layout for better visualization
+	pos = nx.spring_layout(G, k=2, iterations=50, seed=42)
+	
+	# Color nodes by degree (number of connections)
+	node_degrees = dict(G.degree())
+	node_colors = [node_degrees[node] for node in G.nodes()]
+	max_degree = max(node_degrees.values()) if node_degrees else 1
+	
+	# Draw nodes with color gradient based on degree
+	nodes = nx.draw_networkx_nodes(G, pos, node_color=node_colors, node_size=2000, 
+	                                cmap="YlOrRd", vmin=0, vmax=max_degree, ax=plt.gca())
+	
+	# Draw edges with varying width based on weight
+	edges = G.edges()
+	weights = [G[u][v]["weight"] for u, v in edges]
+	max_weight = max(weights) if weights else 1
+	edge_widths = [3 * (w / max_weight) for w in weights]
+	nx.draw_networkx_edges(G, pos, width=edge_widths, alpha=0.5, ax=plt.gca())
+	
+	# Draw labels with smaller font
+	nx.draw_networkx_labels(G, pos, font_size=7, font_weight="bold", ax=plt.gca())
+	
+	plt.title("Tag Co-occurrence Network", fontsize=16, fontweight="bold")
+	plt.axis("off")
+	plt.tight_layout()
+	plt.savefig(output_path, dpi=150, bbox_inches="tight")
+	plt.close()
 
 
 def plot_user_agreement_matrix(users, reviews, output_path):
@@ -279,8 +349,13 @@ def main():
 		os.path.join(output_dir, "tag_heatmap.png"),
 		min_count=3,
 	)
-	plot_tag_counts_pie(tag_stats, os.path.join(output_dir, "tag_counts_pie.png"))
+	plot_tag_counts_treemap(
+		tag_stats,
+		os.path.join(output_dir, "tag_counts_treemap.png"),
+		min_count=3,
+	)
 	plot_user_agreement_matrix(users, reviews, os.path.join(output_dir, "user_agreement.png"))
+	plot_tag_network(game_tags, os.path.join(output_dir, "tag_network.png"))
 
 	if unmatched:
 		print("Unmatched games (not found in gametags.json):")
