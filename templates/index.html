@@ -140,6 +140,42 @@
             border-radius: 6px;
             border-left: 4px solid #c33;
         }
+
+        .kasane-image-wrapper {
+            text-align: center;
+            overflow: auto;
+        }
+
+        .kasane-main-image {
+            width: min(100%, 1000px);
+            height: auto;
+            border-radius: 8px;
+        }
+
+        .kasane-cursor-follower {
+            position: fixed;
+            width: 50px;
+            height: auto;
+            border-radius: 8px;
+            pointer-events: none;
+            opacity: 0;
+            left: -500px;
+            top: -500px;
+            transform: translate(-50%, -50%);
+            transition: opacity 0.2s ease, left 0.15s ease-out, top 0.15s ease-out;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            z-index: 10000;
+        }
+
+        .kasane-cursor-follower.visible {
+            opacity: 0.85;
+        }
+
+        @media (hover: none), (pointer: coarse) {
+            .kasane-cursor-follower {
+                display: none;
+            }
+        }
     </style>
 </head>
 <body>
@@ -198,17 +234,44 @@
         
         <!-- Kasane Pearto Image Tab -->
         <div id="kasane-image" class="tab-content">
-            <div style="text-align: center; overflow: auto;">
+            <div class="kasane-image-wrapper">
                 <img src="{{ url_for('static', filename='Kasane_Pearto_Original.webp') }}" 
                      alt="Kasane Pearto" 
-                     style="width: 1000px; height: auto; border-radius: 8px;">
+                     class="kasane-main-image">
             </div>
         </div>
     </div>
     
+    <img id="kasane-cursor-follower"
+         class="kasane-cursor-follower"
+         src="{{ url_for('static', filename='Kasane_Pearto_Original.webp') }}"
+         alt=""
+         aria-hidden="true">
+    
     <script>
         // Initialize users
         const users = {{ users | tojson }};
+        const kasaneImageTab = document.getElementById('kasane-image');
+        const kasaneCursorFollower = document.getElementById('kasane-cursor-follower');
+        const hasFinePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+        let isKasaneTabActive = false;
+
+        function hideKasaneFollower() {
+            if (!kasaneCursorFollower) return;
+            kasaneCursorFollower.classList.remove('visible');
+        }
+
+        function updateKasaneFollowerPosition(event) {
+            if (!isKasaneTabActive || !kasaneCursorFollower) return;
+
+            kasaneCursorFollower.style.left = event.clientX + 'px';
+            kasaneCursorFollower.style.top = event.clientY + 'px';
+            kasaneCursorFollower.classList.add('visible');
+        }
+
+        if (hasFinePointer) {
+            document.addEventListener('mousemove', updateKasaneFollowerPosition);
+        }
         
         // Tab switching
         document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -222,6 +285,12 @@
                 // Update active content
                 document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
                 document.getElementById(tabName).classList.add('active');
+
+                // Handle Kasane follower visibility
+                isKasaneTabActive = (tabName === 'kasane-image');
+                if (!isKasaneTabActive) {
+                    hideKasaneFollower();
+                }
                 
                 // Load chart if needed
                 loadChart(tabName);
